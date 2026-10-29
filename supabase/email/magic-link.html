@@ -1,0 +1,12 @@
+<!-- Supabase → Authentication → Email Templates → Magic Link. Assunto: "A tua entrada na Velah Books" -->
+<div style="background:#0D1A1E;padding:40px 16px;font-family:Jost,Arial,sans-serif;color:#EAE5D9">
+  <div style="max-width:460px;margin:0 auto;background:#15262B;border:1px solid #2A3E44;border-radius:16px;padding:32px;text-align:center">
+    <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:28px;font-weight:600;margin-bottom:6px">Velah Books</div>
+    <div style="font-size:11px;letter-spacing:.16em;color:#93A6A6;text-transform:uppercase;margin-bottom:26px">Iluminando o teu futuro</div>
+    <p style="font-size:16px;line-height:1.5;margin:0 0 22px">Carrega no botão para entrares na tua biblioteca.</p>
+    <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#E3B062;color:#0D1A1E;text-decoration:none;font-weight:600;padding:13px 26px;border-radius:10px">Entrar na Velah</a>
+    <p style="font-size:14px;color:#93A6A6;margin:26px 0 6px">Ou escreve este código na app:</p>
+    <div style="font-size:30px;letter-spacing:.3em;font-weight:600;color:#E3B062">{{ .Token }}</div>
+    <p style="font-size:12px;color:#93A6A6;margin:26px 0 0">Se não pediste este email, podes ignorá-lo.</p>
+  </div>
+</div>

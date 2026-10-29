@@ -1,0 +1,1 @@
+-- Aplicada no projeto: gerador aleatório vive no esquema 'extensions' (já incluído em 002_functions.sql).
