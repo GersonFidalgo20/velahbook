@@ -51,7 +51,8 @@ const STATUS_L = { draft: 'Rascunho', soon: 'Em breve', presale: 'Pré-venda', r
 async function admGeral(el){
   const { data, error } = await sb.rpc('admin_overview'); if(error) throw error;
   const k = (l, v, s) => `<div class="kpi"><span>${l}</span><b>${v}</b>${s ? `<small>${s}</small>` : ''}</div>`;
-  el.innerHTML = `<div class="kpis">${k('Contas', int(data.users))}${k('Leitores ativos (7 dias)', int(data.readers_7d))}${k('Encomendas pagas', int(data.orders_paid), eur(data.revenue_cents / 100) + ' de receita')}${k('Candidaturas de autores', int(data.applications))}</div>
+  el.innerHTML = `<div class="kpis">${k('Contas', int(data.users), int(data.users_7d || 0) + ' novas em 7 dias')}${k('Livros grátis guardados', int(data.free_claims || 0))}${k('Pediram o impresso', int(data.print_interest || 0), int(data.print_clicks || 0) + ' cliques para comprar')}</div>
+    <div class="kpis" style="margin-top:14px">${k('Leitores ativos (7 dias)', int(data.readers_7d))}${k('Encomendas pagas', int(data.orders_paid), eur(data.revenue_cents / 100) + ' de receita')}${k('Candidaturas de autores', int(data.applications))}
     <div class="kpis" style="margin-top:14px">${k('Livros no catálogo', BOOK_ROWS.length, BOOK_ROWS.filter(b => b.status === 'ready').length + ' à venda')}${k('Códigos do impresso', int(data.print_codes), int(data.print_redeemed) + ' usados')}</div>`;
 }
 
@@ -61,7 +62,7 @@ async function admLivros(el){
   el.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:14px"><p style="margin:0;color:var(--dim)">${data.length} livros. Os rascunhos só são visíveis para a administração.</p><a class="btn primary" href="#admin/importar">+ Novo livro a partir do manuscrito</a></div>
     <div class="tablewrap"><table class="admtable"><thead><tr><th>Livro</th><th>Estado</th><th>Preço</th><th>Capítulos</th><th>Palavras</th><th></th></tr></thead><tbody>
     ${data.map(b => `<tr><td class="book">${coverEl(b.slug)}<span><b>${esc(b.short)}</b><br><small style="color:var(--dim)">${esc(b.authors?.name || '')} · ${b.slug}</small></span></td>
-      <td><span class="chip ${b.status === 'ready' ? 'ok' : b.status === 'presale' ? 'gold' : ''}">${STATUS_L[b.status]}</span></td><td>${eur(b.price_cents / 100)}</td><td>${b.toc.length}</td><td>${int(b.words)}</td>
+      <td><span class="chip ${b.status === 'ready' ? 'ok' : b.status === 'presale' ? 'gold' : ''}">${STATUS_L[b.status]}</span></td><td>${b.price_cents ? eur(b.price_cents / 100) : 'Grátis'}</td><td>${b.toc.length}</td><td>${int(b.words)}</td>
       <td><button class="btn ghost small" data-edit="${b.slug}">Editar</button></td></tr>`).join('')}</tbody></table></div><div id="admedit"></div>`;
   el.querySelectorAll('[data-edit]').forEach(btn => btn.onclick = () => { const b = data.find(x => x.slug === btn.dataset.edit); bookForm(document.getElementById('admedit'), b, null); document.getElementById('admedit').scrollIntoView({ behavior: 'smooth' }); });
 }
@@ -74,13 +75,17 @@ function bookForm(el, b, parsed){
       ${f('title', 'Título completo', b.title, 'required')}${f('short', 'Título curto (loja)', b.short)}
       ${f('sub', 'Subtítulo', b.sub)}${f('author', 'Autor', b.authors?.name || b.author || 'Gerson Fidalgo', 'required')}
       ${f('slug', 'Identificador (só letras e números)', b.slug || (b.title ? slugify(b.title) : ''), b.id ? 'readonly' : 'required pattern="[a-z0-9]+"')}
-      ${f('price', 'Preço (€, IVA incluído)', b.price_cents != null ? (b.price_cents / 100).toFixed(2) : '7.90', 'inputmode="decimal" required')}
+      ${f('price', 'Preço (€, IVA incluído · 0 = grátis)', b.price_cents != null ? (b.price_cents / 100).toFixed(2) : '7.90', 'inputmode="decimal" required')}
       <div class="field"><label for="bf-status">Estado</label><select id="bf-status">${Object.entries(STATUS_L).map(([k, l]) => `<option value="${k}" ${k === (b.status || 'draft') ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       ${f('badge', 'Etiqueta (ex.: Novo)', b.badge)}
       ${f('launch_label', 'Data de lançamento (texto)', b.launch_label, 'placeholder="22 de janeiro de 2027"')}${f('launch_date', 'Data de lançamento', b.launch_date, 'type="date"')}
       ${f('event_label', 'Evento de lançamento', b.event_label)}${f('pages', 'Páginas (impresso)', b.pages, 'inputmode="numeric"')}
       ${f('series', 'Série', b.series)}${f('series_n', 'Número na série', b.series_n, 'inputmode="numeric"')}
       ${f('sort', 'Ordem na loja', b.sort ?? 100, 'inputmode="numeric"')}
+      ${f('edition', 'Nota de edição (ex.: Edição Velah · 30% do livro)', b.edition)}
+      ${f('print_url', 'Link de compra do livro impresso', b.print_url, 'placeholder="https://…"')}
+      ${f('print_price', 'Preço do impresso (€, opcional)', b.print_price_cents != null ? (b.print_price_cents / 100).toFixed(2) : '', 'inputmode="decimal"')}
+      ${f('print_label', 'Texto do botão (opcional)', b.print_label, 'placeholder="Comprar o livro impresso"')}
       <div class="field"><label><input type="checkbox" id="bf-featured" ${b.featured ? 'checked' : ''}> Destaque na página inicial</label></div>
     </div>
     <div class="field"><label for="bf-blurb">Descrição</label><textarea id="bf-blurb" rows="4">${esc(b.blurb || '')}</textarea></div>
@@ -104,7 +109,8 @@ function bookForm(el, b, parsed){
     if(!(price >= 0)){ toast('Preço inválido'); return; }
     const book = { slug: v('slug'), title: v('title'), short: v('short') || v('title'), sub: v('sub'), author: v('author'), price_cents: price, status: v('status'),
       badge: v('badge'), launch_label: v('launch_label'), launch_date: v('launch_date'), event_label: v('event_label'), pages: v('pages'), series: v('series'), series_n: v('series_n'),
-      sort: +v('sort') || 100, featured: form.querySelector('#bf-featured').checked, blurb: form.querySelector('#bf-blurb').value.trim(), pull: v('pull'),
+      sort: +v('sort') || 100, edition: v('edition'), print_url: v('print_url'), print_label: v('print_label'),
+      print_price_cents: v('print_price') ? Math.round(parseFloat(v('print_price').replace(',', '.')) * 100) : '', featured: form.querySelector('#bf-featured').checked, blurb: form.querySelector('#bf-blurb').value.trim(), pull: v('pull'),
       cover: Object.fromEntries(Object.entries({ url: v('cover_url'), bg: v('bg'), motif: v('motif'), preset: (b.cover || {}).preset }).filter(([, x]) => x)) };
     const p = { book };
     if(parsed){ p.chapters = parsed.chapters.map(c => ({ idx: c.idx, title: c.title, part: c.part || '', md: c.md, free: c.free, words: c.words }));

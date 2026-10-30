@@ -53,6 +53,16 @@ O email **fidalgogerson@gmail.com** fica administrador automaticamente no primei
 
 Até estes passos estarem feitos, o botão de pagar mostra "Os pagamentos ainda não estão ativos nesta beta". Tudo o resto funciona.
 
+## Oferta de lançamento e livro impresso
+
+- **Livros grátis.** Um livro a 0 € aparece na loja como "Oferta de lançamento". O leitor cria conta e guarda-o na biblioteca com um toque. Os livros de Gerson Fidalgo já estão assim.
+- **Livro impresso.** Cada livro grátis mostra "Quero o livro impresso" na página do livro, no fim de cada capítulo e, em destaque, no fim da edição.
+  - **Sem link de compra:** o botão regista o pedido do leitor.
+  - **Com link de compra:** leva o leitor à loja.
+  - **Onde se configura:** em *Administração → Livros → Editar*, nos campos "Link de compra do livro impresso", "Preço do impresso" e "Nota de edição" (ex.: "Edição Velah · 30% do livro").
+- **Onde ver os números:**
+  - *Administração → Visão geral* e *Painel do autor* mostram contas novas, livros guardados, pedidos do impresso e cliques para comprar.
+
 ## Carregar os 30 livros
 
 Menu da conta → **Administração → Importar manuscrito**:

@@ -23,7 +23,7 @@ const pgErr = e => { const m = (e && (e.message || e.error_description)) || ''; 
 /* ---------- catálogo ---------- */
 async function loadCatalog(){
   const { data, error } = await sb.from('books')
-    .select('id,slug,title,short,sub,price_cents,status,launch_label,launch_date,event_label,series,series_n,badge,blurb,pull,pages,cover,toc,words,sort,featured,authors(name)')
+    .select('id,slug,title,short,sub,price_cents,status,launch_label,launch_date,event_label,series,series_n,badge,blurb,pull,pages,cover,toc,words,sort,featured,print_url,print_label,print_price_cents,edition,authors(name)')
     .order('sort');
   if(error) throw error;
   BOOK_ROWS = data || [];
@@ -33,6 +33,7 @@ async function loadCatalog(){
     if(r.status === 'draft') return;
     BOOKS.push({ id: r.id, slug: r.slug, title: r.title, short: r.short, sub: r.sub, author: r.authors?.name || '', price: r.price_cents / 100,
       pages: r.pages, status: r.status, badge: r.badge, blurb: r.blurb, pull: r.pull, launch: r.launch_label, cover: r.cover || {}, featured: r.featured,
+      printUrl: r.print_url || '', printLabel: r.print_label || '', printPrice: r.print_price_cents, edition: r.edition || '',
       series: r.series ? `${r.series} · Livro ${ROMAN[r.series_n] || r.series_n || ''}` : null, seriesName: r.series, n: r.series_n });
   });
   const pre = BOOK_ROWS.find(r => r.status === 'presale' && r.launch_label); LAUNCH = pre ? pre.launch_label : '';
@@ -240,6 +241,7 @@ function toggleNotify(n){
 
 /* ---------- compra ---------- */
 function openCheckout(slug){
+  if(isFree(bySlug(slug))){ claimFree(slug); return; }
   if(!USER){ loginModal('Entra para comprar', () => { route(); openCheckout(slug); }); return; }
   const isB = BUNDLES.some(b => b.slug === slug);
   const item = isB ? BUNDLE : bySlug(slug); if(!item) return;
@@ -409,13 +411,18 @@ async function vAuthor(){
       <div class="kpi"><span>Vendas</span><b>${int(T('units'))}</b><small>${int(T('units_30'))} nos últimos 30 dias</small></div>
       <div class="kpi"><span>Receita bruta</span><b>${eur(T('gross_cents') / 100)}</b><small>IVA incluído</small></div>
       <div class="kpi"><span>Os teus royalties</span><b style="color:var(--wick)">${eur(T('royal'))}</b><small>80% do valor líquido</small></div>
-      <div class="kpi"><span>Leitores com contacto</span><b>${int(T('contacts'))}</b><small>${int(T('owners'))} pessoas têm os teus livros</small></div>
+      <div class="kpi"><span>Leitores com os teus livros</span><b>${int(T('owners'))}</b><small>${int(T('owners_30'))} nos últimos 30 dias</small></div>
+    </div>
+    <div class="kpis" style="margin-top:14px">
+      <div class="kpi"><span>Pediram o livro impresso</span><b style="color:var(--wick)">${int(T('print_interest'))}</b><small>leitores à espera do papel</small></div>
+      <div class="kpi"><span>Cliques para comprar o impresso</span><b>${int(T('print_clicks'))}</b><small>a partir da Velah</small></div>
+      <div class="kpi"><span>Leitores com contacto</span><b>${int(T('contacts'))}</b><small>aceitaram ser contactados</small></div>
     </div>
     ${T('units') === 0 ? '<p class="note" style="margin-top:14px">Ainda sem vendas. Os números aparecem aqui em tempo real a partir do lançamento.</p>' : ''}
     <div class="two">
-      <div class="panelbox"><h3>Por livro</h3><p class="hint">Royalty por exemplar já com IVA (6%), Stripe e plataforma descontados.</p>
-        <div class="tablewrap"><table><thead><tr><th>Livro</th><th>Preço</th><th>Vendas</th><th>Bruto</th><th>Royalties</th><th>Por exemplar</th></tr></thead><tbody>
-        ${rows.map(r => `<tr><td class="book">${coverEl(r.slug)}<span>${esc(r.title)}${r.status === 'presale' ? ' <span class="chip gold">pré-venda</span>' : ''}</span></td><td>${eur(r.price)}</td><td>${int(r.units)}</td><td>${eur(r.gross_cents / 100)}</td><td style="color:var(--wick);font-weight:600">${eur(r.royal)}</td><td>${eur(r.unitRoyal)}</td></tr>`).join('')}
+      <div class="panelbox"><h3>Por livro</h3><p class="hint">Livros grátis contam como leitores; os pedidos do impresso são o funil para a venda em papel.</p>
+        <div class="tablewrap"><table><thead><tr><th>Livro</th><th>Preço</th><th>Leitores</th><th>Querem o impresso</th><th>Vendas</th><th>Royalties</th></tr></thead><tbody>
+        ${rows.map(r => `<tr><td class="book">${coverEl(r.slug)}<span>${esc(r.title)}${r.status === 'presale' ? ' <span class="chip gold">pré-venda</span>' : ''}</span></td><td>${r.price ? eur(r.price) : 'Grátis'}</td><td>${int(r.owners)}</td><td style="color:var(--wick);font-weight:600">${int(r.print_interest)}</td><td>${int(r.units)}</td><td>${eur(r.royal)}</td></tr>`).join('')}
         </tbody></table></div></div>
       <div class="panelbox"><h3>Até onde leem</h3><p class="hint">${first ? esc(first.title) + ' · % de quem tem o livro e terminou cada capítulo' : ''}</p><div class="compare">${first ? ret(first) || '<span class="hint">Aparece quando houver leitores.</span>' : ''}</div></div>
     </div>`;
@@ -510,3 +517,60 @@ function genericCover(b){
     <g transform="translate(140 415.2) scale(.2)">${sym.map((d, k) => `<path d="${d}" fill="${k < 2 ? gold : fg}"/>`).join('')}</g>
     <rect width="300" height="450" filter="url(#${u}n)" opacity=".55"/></svg>`;
 }
+
+/* ---------- livros-semente (oferta de lançamento) e livro impresso ---------- */
+const isFree = b => !!b && b.price === 0;
+async function claimFree(slug, after){
+  if(!USER){ loginModal('Cria a tua conta e lê grátis', () => claimFree(slug, after)); return; }
+  const { error } = await sb.rpc('claim_free_book', { p_slug: slug });
+  if(error){ toast(pgErr(error)); return; }
+  await pullUser(); resetContent(); buzz([10, 40, 10]); renderAcct();
+  toast('Está na tua biblioteca · oferta de lançamento');
+  if(after){ after(); return; }
+  if(!R.el.hidden && R.slug === slug){ R.book = await getBook(slug); renderChapter(0); return; }
+  location.hash = 'ler-' + slug;
+}
+async function claimAllFree(){
+  if(!USER){ loginModal('Cria a tua conta e recebe os livros', claimAllFree); return; }
+  const free = BOOKS.filter(b => isFree(b) && !owns(b.slug));
+  for(const b of free){ await sb.rpc('claim_free_book', { p_slug: b.slug }); }
+  await pullUser(); resetContent(); renderAcct();
+  toast(free.length ? `${free.length} ${free.length === 1 ? 'livro guardado' : 'livros guardados'} na tua biblioteca` : 'Já tens todos na biblioteca');
+  burst(innerWidth / 2, innerHeight / 3); location.hash = 'biblioteca';
+}
+function launchOfferHTML(){
+  const free = BOOKS.filter(isFree); if(!free.length) return '';
+  const all = USER && free.every(b => owns(b.slug));
+  return `<section class="sec offer"><div class="offer-in"><div>
+    <div class="eyebrow">Oferta de lançamento</div>
+    <h2>Os livros de Gerson Fidalgo são grátis na Velah</h2>
+    <p>Cria a tua conta, guarda ${free.length === 1 ? 'o livro' : `os ${free.length} livros`} na tua biblioteca e começa a ler esta noite. Quando quiseres o livro completo em papel, está a um toque.</p>
+    <div class="row">${all ? '<a class="btn primary" href="#biblioteca">Ir para a minha biblioteca</a>' : `<button class="btn primary" data-claimall>${USER ? 'Guardar todos na biblioteca' : 'Criar conta e receber os livros'}</button>`}</div></div>
+    <div class="fan offer-fan">${free.slice(0, 3).map(b => coverEl(b.slug)).join('')}</div></div></section>`;
+}
+function printCTA(slug, place, big){
+  const b = bySlug(slug); if(!b || !isFree(b) && !b.printUrl) return '';
+  const asked = !!(S.printAsk || {})[slug];
+  const price = b.printPrice ? ' · ' + eur(b.printPrice / 100) : '';
+  const btn = b.printUrl
+    ? `<a class="btn primary small" href="${esc(b.printUrl)}" target="_blank" rel="noopener" data-print="${slug}" data-place="${esc(place)}">${esc(b.printLabel || 'Comprar o livro impresso')}${price}</a>`
+    : `<button class="btn ${asked ? 'ghost' : 'primary'} small" data-printask="${slug}" data-place="${esc(place)}" ${asked ? 'disabled' : ''}>${asked ? 'Pedido registado ✓' : 'Quero o livro impresso'}</button>`;
+  const head = big ? 'O livro continua em papel' : 'Continua no livro completo';
+  const txt = (b.edition ? esc(b.edition) + '. ' : '') + (b.printUrl ? 'A edição completa, em papel, com tudo o que esta versão não traz.' : 'Diz-nos que o queres e avisamos-te assim que estiver disponível.');
+  return `<div class="printcta${big ? ' big' : ''}">${symSVG(30, 24, 'var(--wick)', 'currentColor')}<div><b>${head}</b><span>${txt}</span></div>${btn}</div>`;
+}
+document.addEventListener('click', async e => {
+  if(e.target.closest('[data-claimall]')){ e.preventDefault(); claimAllFree(); return; }
+  const a = e.target.closest('[data-printask]');
+  if(a){
+    e.preventDefault(); const slug = a.dataset.printask;
+    if(!USER){ loginModal('Entra para pedires o livro impresso', () => route()); return; }
+    const { error } = await sb.from('print_leads').insert({ book_id: bookId(slug), user_id: USER.id, kind: 'interest', place: (a.dataset.place || '').slice(0, 40) });
+    if(error){ toast('Não foi possível registar. Tenta outra vez.'); return; }
+    S.printAsk = Object.assign({}, S.printAsk, { [slug]: Date.now() }); save();
+    document.querySelectorAll(`[data-printask="${slug}"]`).forEach(x => { x.textContent = 'Pedido registado ✓'; x.disabled = true; x.classList.replace('primary', 'ghost'); });
+    burstAt(a); buzz(10); toast('Avisamos-te quando o livro impresso estiver disponível'); return;
+  }
+  const c = e.target.closest('[data-print]');
+  if(c) sb.from('print_leads').insert({ book_id: bookId(c.dataset.print), user_id: USER?.id || null, kind: 'click', place: (c.dataset.place || '').slice(0, 40) }).then(() => {});
+});

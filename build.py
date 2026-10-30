@@ -58,6 +58,19 @@ rep('<span>Protótipo de 18/10/2026. Nenhum pagamento real é feito.</span>', '<
 rep("    ${cont}\n    ${ritualHTML()}", "    ${USER?'':loginCard('Entra para guardares a biblioteca, o caderno e o ritual em todos os teus dispositivos.')}\n    ${cont}\n    ${ritualHTML()}")
 # a primeira renderAcct() corria antes de existir sessão
 rep("renderAcct();\n\nfunction vGate(){", "\nfunction vGate(){")
+# oferta de lançamento + livro impresso
+rep("  return `<span class=\"price\">${eur(b.price)}</span>`;\n}", "  if(isFree(b)) return `<span class=\"chip gold\">Grátis</span>`;\n  return `<span class=\"price\">${eur(b.price)}</span>`;\n}")
+rep('''            : `<div><span class="big">${eur(b.price)}</span><small>IVA incluído · pagamento único, sem subscrição</small></div>''',
+    '''            : isFree(b) ? `<div><span class="big">Grátis</span><small>Oferta de lançamento · fica na tua biblioteca para sempre</small></div>
+               <button class="btn primary" data-buy="${slug}">${USER?'Guardar e ler':'Criar conta e ler grátis'}</button>
+               <a class="btn ghost" href="#ler-${slug}">Espreitar o início</a>`
+            : `<div><span class="big">${eur(b.price)}</span><small>IVA incluído · pagamento único, sem subscrição</small></div>''')
+rep("        ${!pre && !owns(slug)?`<p class=\"qrlink\">", "        ${printCTA(slug,'livro',true)}\n        ${!pre && !owns(slug)?`<p class=\"qrlink\">")
+rep('<span class="chip">Português (PT)</span>', '<span class="chip">Português (PT)</span>${b.edition?`<span class="chip gold">${esc(b.edition)}</span>`:\'\'}')
+rep('<h4>Gostaste do início?</h4><p>Este capítulo faz parte do livro completo. Compra uma vez e fica na tua biblioteca para sempre.</p><button class="btn primary" data-buy="${R.slug}">Comprar · ${eur(b.price)}</button>',
+    '${isFree(b)?`<h4>Este livro é teu, grátis</h4><p>Oferta de lançamento da Velah. Guarda-o na tua biblioteca e continua a ler agora.</p><button class="btn primary" data-buy="${R.slug}">Guardar grátis e continuar</button>`:`<h4>Gostaste do início?</h4><p>Este capítulo faz parte do livro completo. Compra uma vez e fica na tua biblioteca para sempre.</p><button class="btn primary" data-buy="${R.slug}">Comprar · ${eur(b.price)}</button>`}')
+rep('<p class="hlc"></p>`;', '<p class="hlc"></p>${printCTA(R.slug,"cap-"+R.ch,R.ch===R.book.chapters.length-1)}`;')
+rep("  ${quizHTML()}", "  ${launchOfferHTML()}\n  ${quizHTML()}")
 # arranque
 a = s.rindex('route();\n</script>')
 s = s[:a] + backend + '\n' + admin + '\nboot();\n</script>' + s[a+len('route();\n</script>'):]

@@ -28,3 +28,13 @@ footer.foot a{color:inherit}
 .grid2 .field input,.grid2 .field select,.bookform .field input,.bookform .field select{width:100%;min-width:0;box-sizing:border-box}
 .bookform input[type=color]{background:var(--ink);border:1px solid var(--line);border-radius:9px;cursor:pointer}
 .bookform .field label input[type=checkbox]{width:auto;margin-right:6px;accent-color:var(--wick)}
+.offer .offer-in{display:grid;grid-template-columns:1fr auto;gap:28px;align-items:center;padding:26px;border-radius:18px;border:1px solid color-mix(in srgb,var(--wick) 45%,var(--line));background:radial-gradient(120% 160% at 100% 0%,color-mix(in srgb,var(--wick) 18%,transparent),transparent 60%),var(--panel)}
+.offer h2{font-family:var(--display);font-weight:600;font-size:clamp(28px,3.6vw,38px);line-height:1.08;margin:6px 0 10px}
+.offer p{color:var(--dim);margin:0 0 18px;max-width:52ch}
+.offer-fan{width:190px;height:130px}.offer-fan .cover{width:84px}
+.printcta{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:16px 0 0;padding:14px 16px;border:1px dashed color-mix(in srgb,var(--wick) 50%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--wick) 6%,transparent);font-family:var(--ui);text-align:left}
+.printcta>div{flex:1;min-width:180px}.printcta b{display:block;font-size:15px}.printcta span{font-size:13px;color:var(--dim)}
+#reader .printcta span{color:var(--rdim)}#reader .printcta{border-color:color-mix(in srgb,var(--racc) 50%,var(--rline));background:color-mix(in srgb,var(--racc) 7%,transparent)}
+#reader .printcta .btn.primary{background:var(--racc);color:var(--rbg)}
+.printcta.big{padding:18px 20px;border-style:solid}.printcta.big b{font-family:var(--display);font-size:22px;font-weight:600}
+@media (max-width:640px){.offer .offer-in{grid-template-columns:1fr}.offer-fan{order:-1}}

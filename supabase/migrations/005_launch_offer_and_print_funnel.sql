@@ -1,0 +1,3 @@
+-- Aplicada no projeto velah-books a 30/10/2026: colunas print_url, print_label, print_price_cents, edition em books;
+-- tabela print_leads (interesse / cliques no livro impresso); claim_free_book(slug); admin_import_book, author_stats e
+-- admin_overview atualizadas; livros de Gerson Fidalgo a 0 € (oferta de lançamento); pack 'serie' desativado.
