@@ -10,7 +10,7 @@ def rep(a, b, n=1):
     c = s.count(a); assert c == n, (a[:90], c); s = s.replace(a, b)
 
 rep('<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>',
-    '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<script src="vendor/marked.min.js"></script>\n<script src="vendor/supabase.js"></script>\n<script src="config.js"></script>')
+    '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<meta name="description" content="Livros para crescer, feitos para a noite. Leitor com luz âmbar, caderno e ritual da noite. Oferta de lançamento: livros grátis.">\n<meta property="og:type" content="website">\n<meta property="og:site_name" content="Velah Books">\n<meta property="og:title" content="Velah Books · Iluminando o teu futuro">\n<meta property="og:description" content="Livros para crescer, feitos para a noite. Cria a tua conta e recebe os livros da oferta de lançamento.">\n<meta property="og:url" content="https://velahbooks.com/">\n<meta property="og:image" content="https://velahbooks.com/og-velah.png">\n<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n<meta property="og:locale" content="pt_PT">\n<meta name="twitter:card" content="summary_large_image">\n<script src="vendor/marked.min.js"></script>\n<script src="vendor/supabase.js"></script>\n<script src="config.js"></script>')
 rep('@media (prefers-reduced-motion:reduce)', css + '\n@media (prefers-reduced-motion:reduce)')
 a = s.index('const BOOKS = ['); b = s.index('const bySlug')
 s = s[:a] + "const BOOKS = [];\nlet BUNDLE = null;\nlet LAUNCH = '';\nconst UPCOMING = [];\n" + s[b:]
