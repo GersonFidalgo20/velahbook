@@ -165,7 +165,7 @@ function loginModal(reason, after){
     <p style="color:var(--dim);margin:0 0 16px">Sem palavra-passe. Enviamos-te um email com um link e um código de entrada.</p>
     <form id="lgf"><div class="field"><label for="lg-email">O teu email</label><input id="lg-email" type="email" required autocomplete="email" inputmode="email" placeholder="nome@email.com"></div>
       <button class="btn primary" style="width:100%" id="lg-send">Enviar link de entrada</button></form>
-    <form id="lgc" hidden><p class="lg-sent"></p><div class="field"><label for="lg-code">Código de 6 dígitos</label><input id="lg-code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="123456"></div>
+    <form id="lgc" hidden><p class="lg-sent"></p><div class="field"><label for="lg-code">Código de entrada (está no email)</label><input id="lg-code" inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="12345678"></div>
       <button class="btn primary" style="width:100%">Entrar com o código</button><button type="button" class="btn ghost" style="width:100%;margin-top:8px" data-lgback>Usar outro email</button></form>
     <p class="fine">Ao entrar aceitas os <a href="#termos" data-close>termos</a> e a <a href="#privacidade" data-close>política de privacidade</a>.</p>
   </div></div>`;

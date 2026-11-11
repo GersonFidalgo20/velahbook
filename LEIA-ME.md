@@ -34,7 +34,7 @@ O email **fidalgogerson@gmail.com** fica administrador automaticamente no primei
    - **Redirect URLs:** `https://velahbooks.com/**` e o endereço `….netlify.app/**`
 4. **Supabase → Authentication → Email Templates → Magic Link:**
    - **Assunto:** "A tua entrada na Velah Books".
-   - **Corpo:** cola o conteúdo de `supabase/email/magic-link.html`. Inclui o código de 6 dígitos, que é útil quando a app está instalada no telemóvel.
+   - **Corpo:** cola o conteúdo de `supabase/email/magic-link.html`. Inclui o código de entrada, que é útil quando a app está instalada no telemóvel.
 5. **Envio de emails (obrigatório antes de abrir ao público).** O envio incluído no Supabase só aguenta alguns emails por hora.
    - Cria uma conta grátis na Resend (ou noutro serviço SMTP) com o domínio velahbooks.com.
    - Em *Supabase → Authentication → SMTP Settings*, coloca o remetente `ola@velahbooks.com`.
