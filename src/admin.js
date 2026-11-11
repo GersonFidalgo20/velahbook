@@ -59,11 +59,13 @@ async function admGeral(el){
 async function admLivros(el){
   const { data, error } = await sb.from('books').select('*, authors(name)').order('sort'); if(error) throw error;
   BOOK_ROWS = data.map(b => ({ ...b, authors: b.authors }));
-  el.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:14px"><p style="margin:0;color:var(--dim)">${data.length} livros. Os rascunhos só são visíveis para a administração.</p><a class="btn primary" href="#admin/importar">+ Novo livro a partir do manuscrito</a></div>
+  el.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:14px"><p style="margin:0;color:var(--dim)">${data.length} livros. Os rascunhos só são visíveis para a administração.</p><div class="row"><label class="btn ghost" for="covbulk">Carregar capas</label><input type="file" id="covbulk" accept="image/jpeg,image/png,image/webp" multiple hidden><a class="btn primary" href="#admin/importar">+ Novo livro a partir do manuscrito</a></div></div>
+    <div id="covres"></div>
     <div class="tablewrap"><table class="admtable"><thead><tr><th>Livro</th><th>Estado</th><th>Preço</th><th>Capítulos</th><th>Palavras</th><th></th></tr></thead><tbody>
     ${data.map(b => `<tr><td class="book">${coverEl(b.slug)}<span><b>${esc(b.short)}</b><br><small style="color:var(--dim)">${esc(b.authors?.name || '')} · ${b.slug}</small></span></td>
       <td><span class="chip ${b.status === 'ready' ? 'ok' : b.status === 'presale' ? 'gold' : ''}">${STATUS_L[b.status]}</span></td><td>${b.price_cents ? eur(b.price_cents / 100) : 'Grátis'}</td><td>${b.toc.length}</td><td>${int(b.words)}</td>
       <td><button class="btn ghost small" data-edit="${b.slug}">Editar</button></td></tr>`).join('')}</tbody></table></div><div id="admedit"></div>`;
+  el.querySelector('#covbulk').onchange = e => bulkCovers([...e.target.files], el.querySelector('#covres'));
   el.querySelectorAll('[data-edit]').forEach(btn => btn.onclick = () => { const b = data.find(x => x.slug === btn.dataset.edit); bookForm(document.getElementById('admedit'), b, null); document.getElementById('admedit').scrollIntoView({ behavior: 'smooth' }); });
 }
 
@@ -91,7 +93,8 @@ function bookForm(el, b, parsed){
     <div class="field"><label for="bf-blurb">Descrição</label><textarea id="bf-blurb" rows="4">${esc(b.blurb || '')}</textarea></div>
     ${f('pull', 'Frase de destaque', b.pull)}
     <h3 style="margin-top:8px">Capa</h3>
-    <div class="grid2">${f('cover_url', 'Imagem da capa (URL, opcional)', c.url, 'placeholder="https://…/capa.jpg"')}
+    <div class="grid2"><div>${f('cover_url', 'Imagem da capa (URL, opcional)', c.url, 'placeholder="https://…/capa.jpg"')}
+      <div class="row" style="margin-top:6px"><label class="btn ghost small" for="bf-cfile">Carregar imagem da capa</label><input type="file" id="bf-cfile" accept="image/jpeg,image/png,image/webp" hidden><span class="hint" id="bf-cmsg">JPG, PNG ou WebP, formato 2:3 (ex.: 1600×2400).</span></div></div>
       <div class="field"><label for="bf-bg">Cor da Coleção Velah</label><input id="bf-bg" type="color" value="${c.bg || '#15262B'}"></div>
       <div class="field"><label for="bf-motif">Desenho</label><select id="bf-motif">${[['', 'Automático'], ['linha', 'Linha'], ['circulo', 'Círculo'], ['arco', 'Nascer do sol'], ['numero', 'Número da série']].map(([k, l]) => `<option value="${k}" ${k === (c.motif || '') ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="field"><label>Pré-visualização</label><div class="cprev" id="cprev"></div></div></div>
@@ -103,6 +106,13 @@ function bookForm(el, b, parsed){
   if(!b.id) form.querySelector('#bf-title').addEventListener('input', () => { const s = form.querySelector('#bf-slug'); if(!s.dataset.touched) s.value = slugify(v('title')); prev(); });
   form.querySelector('#bf-slug').addEventListener('input', e => e.target.dataset.touched = 1);
   form.addEventListener('input', prev); prev();
+  form.querySelector('#bf-cfile').onchange = async e => {
+    const file = e.target.files[0]; if(!file) return; const msg = form.querySelector('#bf-cmsg');
+    const slug = v('slug'); if(!slug){ msg.textContent = 'Preenche primeiro o identificador.'; return; }
+    msg.textContent = 'A carregar…';
+    try{ form.querySelector('#bf-cover_url').value = await uploadCover(slug, file); prev(); msg.textContent = 'Carregada. Grava para aplicar.'; }
+    catch(err){ msg.textContent = pgErr(err); }
+  };
   form.onsubmit = async e => {
     e.preventDefault();
     const price = Math.round(parseFloat(v('price').replace(',', '.')) * 100);
@@ -199,4 +209,50 @@ async function admCand(el){
   const { data, error } = await sb.from('author_applications').select('*').order('created_at', { ascending: false }).limit(200); if(error) throw error;
   el.innerHTML = data.length ? data.map(a => `<article class="nb-item ans"><div class="nb-ch">${new Date(a.created_at).toLocaleString('pt-PT')}</div><p class="nb-a"><b>${esc(a.name)}</b> · <a href="mailto:${esc(a.email)}">${esc(a.email)}</a></p><p class="nb-q">${esc(a.message || '—')}</p></article>`).join('')
     : `<div class="empty"><h2>Ainda sem candidaturas</h2><p>Aparecem aqui as pessoas que carregam em "Quero publicar na Velah".</p></div>`;
+}
+
+
+/* ---------- Capas da RSET: carregar para o Storage e ligar ao livro ---------- */
+async function uploadCover(slug, file){
+  if(!/^image\/(jpeg|png|webp)$/.test(file.type)) throw new Error('Formato não suportado: usa JPG, PNG ou WebP.');
+  if(file.size > 8 * 1024 * 1024) throw new Error('Imagem acima de 8 MB.');
+  const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[file.type];
+  const path = `${slug}/${Date.now()}.${ext}`;
+  const { error } = await sb.storage.from('covers').upload(path, file, { contentType: file.type, cacheControl: '31536000', upsert: false });
+  if(error) throw error;
+  return sb.storage.from('covers').getPublicUrl(path).data.publicUrl;
+}
+// Liga um ficheiro a um livro pelo nome: "gf06.jpg", "GF06 - De Volta ao Secreto.png", "GF-MIL1 capa.jpg", "tira.jpg", ou o título.
+function coverMatch(name){
+  const base = name.replace(/\.[a-z0-9]+$/i, ''), flat = slugify(base);
+  const rows = BOOK_ROWS;
+  const bySlug = rows.find(b => b.slug === flat); if(bySlug) return bySlug;
+  const mil = base.match(/mil[a-z]*\s*[-_ ]?\s*([123]|i{1,3})(?![a-z0-9])/i);
+  if(mil){ const n = { i: 1, ii: 2, iii: 3 }[mil[1].toLowerCase()] || +mil[1]; const r = rows.find(b => b.slug === 'mil' + n); if(r) return r; }
+  const gf = base.match(/gf\s*[-_ ]?\s*0?(\d{1,2})(?!\d)/i);
+  if(gf){ const r = rows.find(b => b.series === 'GF Collection' && +b.series_n === +gf[1]); if(r) return r; }
+  if(/expuls/i.test(base)) return rows.find(b => b.slug === 'expulso');
+  if(/zero/i.test(base)) return rows.find(b => b.slug === 'zero');
+  return rows.filter(b => flat.includes(slugify(b.short)) && slugify(b.short).length > 5).sort((a, b) => b.short.length - a.short.length)[0] || null;
+}
+async function bulkCovers(files, box){
+  if(!files.length) return;
+  const plan = files.map(f => ({ f, b: coverMatch(f.name) }));
+  box.innerHTML = `<div class="panelbox covplan"><h3>Capas a carregar</h3><p class="hint">Confirma o livro de cada imagem. O nome do ficheiro é usado para adivinhar (ex.: <code>GF06 - De Volta ao Secreto.jpg</code>).</p>
+    <div class="covgrid">${plan.map((x, i) => `<div class="covit"><img src="${URL.createObjectURL(x.f)}" alt=""><small>${esc(x.f.name)}</small>
+      <select data-i="${i}"><option value="">— não carregar —</option>${BOOK_ROWS.map(b => `<option value="${b.slug}" ${x.b && x.b.slug === b.slug ? 'selected' : ''}>${b.series === 'GF Collection' ? 'GF' + String(b.series_n).padStart(2, '0') + ' · ' : ''}${esc(b.short)}</option>`).join('')}</select><span class="hint" data-s="${i}"></span></div>`).join('')}</div>
+    <div class="row"><button class="btn primary" id="covgo">Carregar e aplicar</button><span class="hint" id="covmsg"></span></div></div>`;
+  box.scrollIntoView({ behavior: 'smooth' });
+  box.querySelector('#covgo').onclick = async e => {
+    e.target.disabled = true; let ok = 0, fail = 0;
+    for(const [i, x] of plan.entries()){
+      const slug = box.querySelector(`select[data-i="${i}"]`).value, st = box.querySelector(`[data-s="${i}"]`);
+      if(!slug){ st.textContent = 'ignorada'; continue; }
+      st.textContent = 'a carregar…';
+      try{ const url = await uploadCover(slug, x.f); const { error } = await sb.rpc('admin_set_cover', { p_slug: slug, p_url: url }); if(error) throw error; st.textContent = '✓ aplicada'; ok++; }
+      catch(err){ st.textContent = pgErr(err); fail++; }
+      box.querySelector('#covmsg').textContent = `${ok} aplicadas${fail ? ` · ${fail} com erro` : ''}`;
+    }
+    await loadCatalog(); toast(`${ok} capas aplicadas`); if(!fail) vAdmin('livros');
+  };
 }
