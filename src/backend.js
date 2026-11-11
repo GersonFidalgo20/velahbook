@@ -195,10 +195,14 @@ async function logout(){
   try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
   toast('Sessão terminada');
 }
-document.addEventListener('click', e => {
-  if(e.target.closest('[data-login]')){ e.preventDefault(); toggleMenu(false); loginModal(); }
-  else if(e.target.closest('[data-logout]')){ e.preventDefault(); toggleMenu(false); logout(); }
-});
+function onAuthClick(e){
+  if(e.target.closest('[data-login]')){ e.preventDefault(); toggleMenu(false); loginModal(); return true; }
+  if(e.target.closest('[data-logout]')){ e.preventDefault(); toggleMenu(false); logout(); return true; }
+  return false;
+}
+document.addEventListener('click', onAuthClick);
+// o menu da conta trava a propagação dos cliques: tratar aqui também os seus botões
+acctMenu.addEventListener('click', onAuthClick);
 if(sb) sb.auth.onAuthStateChange((ev, session) => {
   SESSION = session; USER = session?.user || null;
   if(!BOOTED || !['SIGNED_IN', 'SIGNED_OUT'].includes(ev)) return;
