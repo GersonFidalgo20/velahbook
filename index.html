@@ -533,6 +533,22 @@ footer.foot a{color:inherit}
 .printcta.big{padding:18px 20px;border-style:solid}.printcta.big b{font-family:var(--display);font-size:22px;font-weight:600}
 @media (max-width:640px){.offer .offer-in{grid-template-columns:1fr}.offer-fan{order:-1}}
 
+/* Em breve · Coleção GF */
+.soon-n{display:block;font-style:normal;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold,#c9a35a);margin-bottom:2px}
+.soon-item>div{min-width:0}
+.soon-coll{margin-top:28px}
+.soon-coll-head h3{font-family:var(--read);font-weight:500;font-size:24px;margin:4px 0 6px}
+.soon-coll-head p{color:var(--dim);max-width:60ch;margin:0 0 16px;font-size:14.5px}
+.soon-more{margin-top:14px}
+.soon-more>summary{cursor:pointer;list-style:none;display:inline-flex;padding:10px 16px;border:1px solid var(--line);border-radius:999px;font-size:14px}
+.soon-more>summary::-webkit-details-marker{display:none}
+.soon-more .when-open{display:none}.soon-more[open] .when-open{display:inline}.soon-more[open] .when-closed{display:none}
+.soon-more[open]>summary{margin-bottom:14px}
+.soon-item{align-items:flex-start}
+.soon-txt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1}
+.soon-txt .btn{margin:8px 0 0!important}
+.soon-item .cover{width:64px}
+
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -745,7 +761,7 @@ function vStore(){
 
   ${UPCOMING.length?`<section class="sec">
     <div class="sec-head"><div><div class="eyebrow">Em preparação</div><h2>Em breve na Velah</h2></div></div>
-    <div class="soon">${UPCOMING.map(u=>`<div class="soon-item">${coverEl(u.id)}<div><b>${u.title}</b><span>${u.when} · ${u.where}</span></div><button class="btn ghost small" data-notify="${u.id}">${S.notify[u.id]?'Aviso ativo':'Avisar-me'}</button></div>`).join('')}</div>
+    ${soonHTML()}
   </section>`:''}
 
   <section class="sec authors">
@@ -1744,7 +1760,7 @@ async function loadCatalog(){
   BOOK_ROWS = data || [];
   BOOKS.length = 0; UPCOMING.length = 0;
   BOOK_ROWS.forEach(r => {
-    if(r.status === 'soon'){ UPCOMING.push({ id: r.slug, title: r.short, when: r.launch_label, where: r.event_label }); return; }
+    if(r.status === 'soon'){ UPCOMING.push({ id: r.slug, title: r.short, when: r.launch_label || '', where: r.event_label || '', sub: r.sub || '', series: r.series || '', n: r.series_n }); return; }
     if(r.status === 'draft') return;
     BOOKS.push({ id: r.id, slug: r.slug, title: r.title, short: r.short, sub: r.sub, author: r.authors?.name || '', price: r.price_cents / 100,
       pages: r.pages, status: r.status, badge: r.badge, blurb: r.blurb, pull: r.pull, launch: r.launch_label, cover: r.cover || {}, featured: r.featured,
@@ -2293,6 +2309,25 @@ document.addEventListener('click', async e => {
   const c = e.target.closest('[data-print]');
   if(c) sb.from('print_leads').insert({ book_id: bookId(c.dataset.print), user_id: USER?.id || null, kind: 'click', place: (c.dataset.place || '').slice(0, 40) }).then(() => {});
 });
+
+
+/* ---------- Em breve: próximos lançamentos + Coleção GF ---------- */
+let SOON_OPEN = false;
+function soonHTML(){
+  const btn = u => `<button class="btn ghost small" data-notify="${u.id}">${S.notify[u.id] ? 'Aviso ativo' : 'Avisar-me'}</button>`;
+  const item = u => `<div class="soon-item">${coverEl(u.id)}<div class="soon-txt">${u.n ? `<em class="soon-n">N.º ${String(u.n).padStart(2,'0')}</em>` : ''}<b>${esc(u.title)}</b><span>${esc([u.when, u.where].map(x => (x || '').trim()).filter(Boolean).join(' · ') || u.sub)}</span>${btn(u)}</div></div>`;
+  const dated = UPCOMING.filter(u => u.when);
+  const rest = UPCOMING.filter(u => !u.when);
+  const FIRST = 6;
+  let h = dated.length ? `<div class="soon">${dated.map(item).join('')}</div>` : '';
+  if(rest.length){
+    const gf = rest.every(u => u.series === rest[0].series) && rest[0].series;
+    h += `<div class="soon-coll"><div class="soon-coll-head"><div><div class="eyebrow">${gf ? esc(gf) : 'A seguir'}</div><h3>${rest.length + dated.filter(u => u.series === gf).length} livros a caminho</h3><p>Cada livro chega primeiro aqui, numa edição Velah oferecida no lançamento. Carrega em "Avisar-me" e avisamos-te quando abrir.</p></div></div>
+      <div class="soon">${rest.slice(0, FIRST).map(item).join('')}</div>
+      ${rest.length > FIRST ? `<details class="soon-more" ${SOON_OPEN ? 'open' : ''} ontoggle="SOON_OPEN=this.open"><summary><span class="when-closed">Ver os outros ${rest.length - FIRST} títulos</span><span class="when-open">Mostrar menos</span></summary><div class="soon">${rest.slice(FIRST).map(item).join('')}</div></details>` : ''}</div>`;
+  }
+  return h;
+}
 
 /* ================= Velah · administração (só papel admin) ================= */
 // Manuscrito .md → capítulos (o mesmo formato dos manuscritos do projeto RSET).

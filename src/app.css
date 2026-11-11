@@ -38,3 +38,19 @@ footer.foot a{color:inherit}
 #reader .printcta .btn.primary{background:var(--racc);color:var(--rbg)}
 .printcta.big{padding:18px 20px;border-style:solid}.printcta.big b{font-family:var(--display);font-size:22px;font-weight:600}
 @media (max-width:640px){.offer .offer-in{grid-template-columns:1fr}.offer-fan{order:-1}}
+
+/* Em breve · Coleção GF */
+.soon-n{display:block;font-style:normal;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold,#c9a35a);margin-bottom:2px}
+.soon-item>div{min-width:0}
+.soon-coll{margin-top:28px}
+.soon-coll-head h3{font-family:var(--read);font-weight:500;font-size:24px;margin:4px 0 6px}
+.soon-coll-head p{color:var(--dim);max-width:60ch;margin:0 0 16px;font-size:14.5px}
+.soon-more{margin-top:14px}
+.soon-more>summary{cursor:pointer;list-style:none;display:inline-flex;padding:10px 16px;border:1px solid var(--line);border-radius:999px;font-size:14px}
+.soon-more>summary::-webkit-details-marker{display:none}
+.soon-more .when-open{display:none}.soon-more[open] .when-open{display:inline}.soon-more[open] .when-closed{display:none}
+.soon-more[open]>summary{margin-bottom:14px}
+.soon-item{align-items:flex-start}
+.soon-txt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;flex:1}
+.soon-txt .btn{margin:8px 0 0!important}
+.soon-item .cover{width:64px}

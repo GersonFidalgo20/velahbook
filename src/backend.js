@@ -29,7 +29,7 @@ async function loadCatalog(){
   BOOK_ROWS = data || [];
   BOOKS.length = 0; UPCOMING.length = 0;
   BOOK_ROWS.forEach(r => {
-    if(r.status === 'soon'){ UPCOMING.push({ id: r.slug, title: r.short, when: r.launch_label, where: r.event_label }); return; }
+    if(r.status === 'soon'){ UPCOMING.push({ id: r.slug, title: r.short, when: r.launch_label || '', where: r.event_label || '', sub: r.sub || '', series: r.series || '', n: r.series_n }); return; }
     if(r.status === 'draft') return;
     BOOKS.push({ id: r.id, slug: r.slug, title: r.title, short: r.short, sub: r.sub, author: r.authors?.name || '', price: r.price_cents / 100,
       pages: r.pages, status: r.status, badge: r.badge, blurb: r.blurb, pull: r.pull, launch: r.launch_label, cover: r.cover || {}, featured: r.featured,
@@ -578,3 +578,22 @@ document.addEventListener('click', async e => {
   const c = e.target.closest('[data-print]');
   if(c) sb.from('print_leads').insert({ book_id: bookId(c.dataset.print), user_id: USER?.id || null, kind: 'click', place: (c.dataset.place || '').slice(0, 40) }).then(() => {});
 });
+
+
+/* ---------- Em breve: próximos lançamentos + Coleção GF ---------- */
+let SOON_OPEN = false;
+function soonHTML(){
+  const btn = u => `<button class="btn ghost small" data-notify="${u.id}">${S.notify[u.id] ? 'Aviso ativo' : 'Avisar-me'}</button>`;
+  const item = u => `<div class="soon-item">${coverEl(u.id)}<div class="soon-txt">${u.n ? `<em class="soon-n">N.º ${String(u.n).padStart(2,'0')}</em>` : ''}<b>${esc(u.title)}</b><span>${esc([u.when, u.where].map(x => (x || '').trim()).filter(Boolean).join(' · ') || u.sub)}</span>${btn(u)}</div></div>`;
+  const dated = UPCOMING.filter(u => u.when);
+  const rest = UPCOMING.filter(u => !u.when);
+  const FIRST = 6;
+  let h = dated.length ? `<div class="soon">${dated.map(item).join('')}</div>` : '';
+  if(rest.length){
+    const gf = rest.every(u => u.series === rest[0].series) && rest[0].series;
+    h += `<div class="soon-coll"><div class="soon-coll-head"><div><div class="eyebrow">${gf ? esc(gf) : 'A seguir'}</div><h3>${rest.length + dated.filter(u => u.series === gf).length} livros a caminho</h3><p>Cada livro chega primeiro aqui, numa edição Velah oferecida no lançamento. Carrega em "Avisar-me" e avisamos-te quando abrir.</p></div></div>
+      <div class="soon">${rest.slice(0, FIRST).map(item).join('')}</div>
+      ${rest.length > FIRST ? `<details class="soon-more" ${SOON_OPEN ? 'open' : ''} ontoggle="SOON_OPEN=this.open"><summary><span class="when-closed">Ver os outros ${rest.length - FIRST} títulos</span><span class="when-open">Mostrar menos</span></summary><div class="soon">${rest.slice(FIRST).map(item).join('')}</div></details>` : ''}</div>`;
+  }
+  return h;
+}

@@ -49,6 +49,8 @@ rep('''  <section class="sec">
 a = s.index('<div class="soon">${UPCOMING.map(')
 b = s.index('</section>', a)
 s = s[:b] + '</section>`:\'\'}' + s[b+len('</section>'):]
+rep('<div class="soon">${UPCOMING.map(u=>`<div class="soon-item">${coverEl(u.id)}<div><b>${u.title}</b><span>${u.when} · ${u.where}</span></div><button class="btn ghost small" data-notify="${u.id}">${S.notify[u.id]?\'Aviso ativo\':\'Avisar-me\'}</button></div>`).join(\'\')}</div>',
+'${soonHTML()}')
 rep("b.series.replace('Série Milionário · ','')", "b.series.replace(/^.* · /,'')")
 rep('<span class="chip">Edição impressa: ${b.pages} pp. A5</span>', "${b.pages?`<span class=\"chip\">Edição impressa: ${b.pages} pp.</span>`:''}")
 rep("'Comprado nesta demonstração.'", "'Guardado na tua conta Velah.'")
