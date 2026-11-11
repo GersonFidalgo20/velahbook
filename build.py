@@ -71,6 +71,11 @@ rep('<h4>Gostaste do início?</h4><p>Este capítulo faz parte do livro completo.
     '${isFree(b)?`<h4>Este livro é teu, grátis</h4><p>Oferta de lançamento da Velah. Guarda-o na tua biblioteca e continua a ler agora.</p><button class="btn primary" data-buy="${R.slug}">Guardar grátis e continuar</button>`:`<h4>Gostaste do início?</h4><p>Este capítulo faz parte do livro completo. Compra uma vez e fica na tua biblioteca para sempre.</p><button class="btn primary" data-buy="${R.slug}">Comprar · ${eur(b.price)}</button>`}')
 rep('<p class="hlc"></p>`;', '<p class="hlc"></p>${printCTA(R.slug,"cap-"+R.ch,R.ch===R.book.chapters.length-1)}`;')
 rep("  ${quizHTML()}", "  ${launchOfferHTML()}\n  ${quizHTML()}")
+# biblioteca no modelo de livros-semente
+s = s.replace("${S.name?esc(S.name):'Leitor convidado'}", "${S.name?esc(S.name):(USER?esc(USER.email.split('@')[0]):'Leitor convidado')}")
+rep('<div class="eyebrow">Comprados</div><h2>Os teus livros</h2>', '<div class="eyebrow">Na tua biblioteca</div><h2>Os teus livros</h2>')
+rep('`<div class="empty"><h2>Ainda sem livros comprados</h2><p>Compra um livro na loja e ele aparece aqui, com o ponto onde paraste guardado.</p><a class="btn primary" href="#loja" style="margin-top:10px">Ir à loja</a></div>`',
+    '(BOOKS.some(b=>isFree(b))?`<div class="empty"><h2>A tua estante está à espera</h2><p>Os livros de Gerson Fidalgo são oferta de lançamento. Guarda-os aqui e começa a ler esta noite.</p><button class="btn primary" data-claimall style="margin-top:10px">${USER?\'Guardar os livros grátis\':\'Criar conta e receber os livros\'}</button></div>`:`<div class="empty"><h2>Ainda sem livros</h2><p>Os livros que guardares ou comprares aparecem aqui, com o ponto onde paraste.</p><a class="btn primary" href="#loja" style="margin-top:10px">Ir à loja</a></div>`)')
 # arranque
 a = s.rindex('route();\n</script>')
 s = s[:a] + backend + '\n' + admin + '\nboot();\n</script>' + s[a+len('route();\n</script>'):]

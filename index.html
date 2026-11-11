@@ -835,14 +835,14 @@ async function vLibrary(){
   }
   const grid = list => `<div class="shelf">${list.map(b=>{ const pr=progressOf(b.slug); return `<a class="card" href="#ler-${b.slug}">${coverEl(b.slug)}<div><h3>${esc(b.short)}</h3></div><div class="meta"><span>${pr>0?Math.round(pr*100)+'% lido':'Por começar'}</span>${b.status==='presale'?'<span class="chip gold">Pré-venda</span>':''}</div><div class="bar" style="margin-top:0"><i style="width:${Math.round(pr*100)}%"></i></div></a>`}).join('')}</div>`;
   view.innerHTML = `
-    <div class="dash-head"><div><div class="eyebrow">${S.name?esc(S.name):'Leitor convidado'}</div><h1 style="font-family:var(--read);font-weight:500;font-size:clamp(28px,3.6vw,40px);margin:6px 0 0">A minha biblioteca</h1></div>
+    <div class="dash-head"><div><div class="eyebrow">${S.name?esc(S.name):(USER?esc(USER.email.split('@')[0]):'Leitor convidado')}</div><h1 style="font-family:var(--read);font-weight:500;font-size:clamp(28px,3.6vw,40px);margin:6px 0 0">A minha biblioteca</h1></div>
       <div class="row"><label for="nm" style="color:var(--dim);font-size:13px">O teu nome nos livros</label><input id="nm" value="${esc(S.name)}" placeholder="Ex.: Ana Gabriela" style="background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 10px;color:var(--paper);font:inherit;width:180px"></div></div>
     ${USER?'':loginCard('Entra para guardares a biblioteca, o caderno e o ritual em todos os teus dispositivos.')}
     ${cont}
     ${ritualHTML()}
     <section class="sec" style="margin-top:34px">
-      <div class="sec-head"><div><div class="eyebrow">Comprados</div><h2>Os teus livros</h2></div><p>${mine.length? mine.length+(mine.length===1?' livro':' livros')+' · disponíveis em qualquer dispositivo com a tua conta' : ''}</p></div>
-      ${mine.length? grid(mine) : `<div class="empty"><h2>Ainda sem livros comprados</h2><p>Compra um livro na loja e ele aparece aqui, com o ponto onde paraste guardado.</p><a class="btn primary" href="#loja" style="margin-top:10px">Ir à loja</a></div>`}
+      <div class="sec-head"><div><div class="eyebrow">Na tua biblioteca</div><h2>Os teus livros</h2></div><p>${mine.length? mine.length+(mine.length===1?' livro':' livros')+' · disponíveis em qualquer dispositivo com a tua conta' : ''}</p></div>
+      ${mine.length? grid(mine) : (BOOKS.some(b=>isFree(b))?`<div class="empty"><h2>A tua estante está à espera</h2><p>Os livros de Gerson Fidalgo são oferta de lançamento. Guarda-os aqui e começa a ler esta noite.</p><button class="btn primary" data-claimall style="margin-top:10px">${USER?'Guardar os livros grátis':'Criar conta e receber os livros'}</button></div>`:`<div class="empty"><h2>Ainda sem livros</h2><p>Os livros que guardares ou comprares aparecem aqui, com o ponto onde paraste.</p><a class="btn primary" href="#loja" style="margin-top:10px">Ir à loja</a></div>`)}
     </section>
     ${samples.length?`<section class="sec"><div class="sec-head"><div><div class="eyebrow">Amostras abertas</div><h2>A experimentar</h2></div></div>${grid(samples)}</section>`:''}`;
   const nm = document.getElementById('nm');
@@ -1531,7 +1531,7 @@ async function vNotebook(){
         <div class="nb-act"><a href="#ler-${b.slug}-${it.ch}">Abrir no livro</a>${it.kind==='hl'?`<button data-nbdel="${b.slug}|${it.h.id}">Remover</button>`:''}</div>
       </article>`).join('')}</section>`;
   };
-  view.innerHTML = `<div class="dash-head"><div><div class="eyebrow">${S.name?esc(S.name):'Leitor convidado'}</div><h1>O meu caderno</h1></div>
+  view.innerHTML = `<div class="dash-head"><div><div class="eyebrow">${S.name?esc(S.name):(USER?esc(USER.email.split('@')[0]):'Leitor convidado')}</div><h1>O meu caderno</h1></div>
     ${books.length?'<button class="btn ghost" data-nbexp>Exportar como texto</button>':''}</div>
     ${books.length? books.map(sec).join('') : `<div class="empty"><h2>O teu caderno ainda está em branco</h2><p>No leitor, seleciona uma frase para a sublinhar ou anotar, e responde aos exercícios do livro. Tudo aparece aqui, organizado por livro e capítulo.</p><a class="btn primary" href="#biblioteca" style="margin-top:10px">Ir para a biblioteca</a></div>`}`;
   view.querySelector('[data-nbexp]')?.addEventListener('click', ()=>{
@@ -1638,7 +1638,7 @@ function renderAcct(){
   acctBtn.innerHTML = ini || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>';
   acctBtn.dataset.author = isAuthor()?'1':'0';
   acctMenu.innerHTML = `
-    <div class="who"><b>${S.name?esc(S.name):'Leitor convidado'}</b><span>${isAuthor()?'Leitor e autor na Velah':'Conta de leitor'}</span></div>
+    <div class="who"><b>${S.name?esc(S.name):(USER?esc(USER.email.split('@')[0]):'Leitor convidado')}</b><span>${isAuthor()?'Leitor e autor na Velah':'Conta de leitor'}</span></div>
     <a role="menuitem" href="#biblioteca">A minha biblioteca</a>
     <a role="menuitem" href="#caderno">O meu caderno</a>
     ${isAuthor()?'<a role="menuitem" href="#autor">Painel do autor <small>Autor</small></a>':'<a role="menuitem" href="#autores">Publicar na Velah</a>'}
