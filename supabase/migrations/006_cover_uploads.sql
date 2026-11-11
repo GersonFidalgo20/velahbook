@@ -1,0 +1,1 @@
+-- Aplicada a 11/11/2026: bucket público "covers" (escrita só administração) e RPC admin_set_cover(slug, url).
